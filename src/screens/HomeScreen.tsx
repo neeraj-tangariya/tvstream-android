@@ -6,7 +6,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 
 import { Sidebar } from '../components/Sidebar';
 import { MovieList } from '../components/MovieList';
-import FocusableInput from '../components/FocusableInput';
+import { TVKeyboard } from '../components/TVKeyboard';
 import FocusableButton from '../components/FocusableButton';
 import { addMovie, Movie } from '../redux/slices/movieSlice';
 import { RootState } from '../redux/store';
@@ -17,10 +17,11 @@ const HomeScreen = () => {
   const dispatch = useDispatch();
   const movies = useSelector((state: RootState) => state.movies.movies);
   const [videoUrl, setVideoUrl] = useState('');
+  const [showKeyboard, setShowKeyboard] = useState(false);
 
   const handlePlay = () => {
     if (!videoUrl) return;
-
+    console.log('Playing stream with URL:', videoUrl);
     const newMovie: Movie = {
       id: Date.now().toString(),
       title: `Stream ${movies.length + 1}`, // Simple title generation
@@ -31,6 +32,7 @@ const HomeScreen = () => {
     dispatch(addMovie(newMovie));
     navigation.navigate('Player', { url: videoUrl });
     setVideoUrl('');
+    setShowKeyboard(false);
   };
   
   const handlePaste = async () => {
@@ -55,6 +57,10 @@ const HomeScreen = () => {
     // 'Home' is already the current screen, no action needed
   };
 
+  const handleKeyboardDone = () => {
+    setShowKeyboard(false);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.contentRow}>
@@ -65,29 +71,39 @@ const HomeScreen = () => {
             
             <View style={styles.inputSection}>
                 <Text style={styles.inputLabel}>Video URL:</Text>
-                <FocusableInput
-                    placeholder="Paste URL or type here..."
-                    value={videoUrl}
-                    onChangeText={setVideoUrl}
-                    containerStyle={styles.inputContainer}
-                    editable={true}
-                    selectTextOnFocus={true}
-                />
-                <Text style={styles.helperText}>
-                    💡 Tip: Use "Paste URL" button or connect a keyboard to type
-                </Text>
-                <View style={styles.buttonRow}>
-                    <FocusableButton 
-                        title="Paste URL" 
-                        onPress={handlePaste} 
-                        style={styles.actionButton} 
-                    />
-                    <FocusableButton 
-                        title="Play Stream" 
-                        onPress={handlePlay} 
-                        style={styles.playButton} 
-                    />
-                </View>
+                
+                {showKeyboard ? (
+                  <TVKeyboard 
+                    onTextChange={setVideoUrl}
+                    onDone={handleKeyboardDone}
+                    initialValue={videoUrl}
+                  />
+                ) : (
+                  <>
+                    <View style={styles.urlDisplay}>
+                      <Text style={styles.urlText} numberOfLines={1}>
+                        {videoUrl || 'No URL entered'}
+                      </Text>
+                    </View>
+                    <View style={styles.buttonRow}>
+                        <FocusableButton 
+                            title="Type URL" 
+                            onPress={() => setShowKeyboard(true)} 
+                            style={styles.actionButton} 
+                        />
+                        <FocusableButton 
+                            title="Paste URL" 
+                            onPress={handlePaste} 
+                            style={styles.actionButton} 
+                        />
+                        <FocusableButton 
+                            title="Play Stream" 
+                            onPress={handlePlay} 
+                            style={styles.playButton} 
+                        />
+                    </View>
+                  </>
+                )}
             </View>
             
             <Text style={styles.sectionTitle}>Recent Streams</Text>
@@ -125,15 +141,19 @@ const styles = StyleSheet.create({
     color: '#AAA',
     marginBottom: 10,
   },
-  inputContainer: {
-    width: '100%',
-    marginBottom: 15,
+  urlDisplay: {
+    backgroundColor: '#1E1E1E',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#444',
+    minHeight: 50,
+    justifyContent: 'center',
   },
-  helperText: {
-    fontSize: 14,
-    color: '#777',
-    marginBottom: 15,
-    fontStyle: 'italic',
+  urlText: {
+    color: '#FFF',
+    fontSize: 16,
   },
   buttonRow: {
     flexDirection: 'row',
