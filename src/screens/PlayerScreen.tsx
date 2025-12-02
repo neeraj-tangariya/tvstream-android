@@ -16,6 +16,7 @@ const PlayerScreen = () => {
     console.log('Video Error:', error);
   };
 
+  console.log('Playing stream with URL:', url);
   return (
     <View style={styles.container}>
       <Video
